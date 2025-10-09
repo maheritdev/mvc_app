@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mvc_app/core/utils/safe.dart';
+import 'package:mvc_app/features/login/controller/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/const/api_const.dart';
 import '../../../core/const/png.dart';
@@ -20,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isPassword = true;
   bool? isChecked = false;
 
-  Future<void> Login({required String phone, required String password}) async {
+  /*Future<void> Login({required String phone, required String password}) async {
     print("login");
     print(ApiConst.LOGIN);
     try {
@@ -58,12 +61,15 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       print(e);
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
+
+    final authProvider = context.watch<AuthProvider>();
+    print("${authProvider.isLoading}");
 
     return Scaffold(
       appBar: AppBar(
@@ -76,8 +82,14 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Image.asset(
+              /*Image.asset(
                 PNGs.logo,
+                width: width * 1,
+                height: height * 0.3,
+                fit: BoxFit.cover,
+              ),*/
+              Image.network(
+                "https://images.unsplash.com/photo-1756894256833-934a85a42df9?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 width: width * 1,
                 height: height * 0.3,
                 fit: BoxFit.cover,
@@ -115,7 +127,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           isPassword = !isPassword;
                         });
                       },
-                      icon: Icon(isPassword ? Icons.visibility : Icons.abc),
+                      icon: Icon(
+                        isPassword ? Icons.visibility : Icons.visibility_off,
+                      ),
                     ),
                     label: Text("Password"),
                     hintText: "please enter your password",
@@ -140,22 +154,36 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                       bool isChecked2 =
                           await SharedPreferencesHelper.getBool("remember") ??
-                              false;
+                          false;
                       print(isChecked2);
                     },
                   ),
                   Text("remember me"),
                 ],
               ),
+              authProvider.isLoading == true  ? CircularProgressIndicator():Container(),
               InkWell(
                 onTap: () async {
-                  if (emailController.text.isNotEmpty &&
-                      passwordController.text.isNotEmpty) {
-                    await Login(
-                      phone: emailController.text,
-                      password: passwordController.text,
-                    );
-                  }
+                    if (emailController.text.isNotEmpty &&
+                        passwordController.text.isNotEmpty) {
+                      context.read<AuthProvider>().Login(
+                        phone: emailController.text,
+                        password: passwordController.text,
+                      );
+                      context
+                          .read<AuthProvider>()
+                          .isLoading = true;
+                      await context.read<AuthProvider>().Login(
+                        phone: emailController.text,
+                        password: passwordController.text,
+                      );
+                      print("${context
+                          .read<AuthProvider>()
+                          .isLoading}");
+                    }
+                    print("${context
+                        .read<AuthProvider>()
+                        .isLoading}");
                 },
                 child: Container(
                   height: height * 0.05,
